@@ -1,6 +1,5 @@
 import * as net from "net"
 import { GameMsg } from "./GameMsg";
-import { MsgParser } from "./MsgParser";
 import { XNSocket } from "./XNSocket";
 
 export class XNSession{
@@ -18,7 +17,7 @@ export class XNSession{
             this.onConnected?.();
         });
         this.xskt.socket?.on('data', (data: Buffer)=>{
-            let msg: GameMsg = MsgParser.UnStringfy(data.toString());
+            let msg: GameMsg = JSON.parse(data.toString());
             this.onReceiveMsg?.(msg);
         });
         this.xskt.socket?.on('end', ()=>{
@@ -37,34 +36,46 @@ export class XNSession{
             return;
         }
 
-        let msgStr = MsgParser.Stringfy(msg);
-        this.xskt.socket?.write(msgStr);
+        let msgJson = JSON.stringify(msg);
+        this.xskt.socket?.write(msgJson);
     }
 
     public onConnected(){
         console.log("Socket connected");
+        if(this.xskt.cbCollect.connectCB){
+            this.xskt.cbCollect.connectCB(this);
+        }
+
         this.xskt.isConnected = true;
     }
 
     public onReceiveMsg(msg: GameMsg){
         console.log("Socket received data");
-        if(this.xskt.receivedCB){
-            this.xskt.receivedCB(msg);
+        if(this.xskt.cbCollect.receiveCB){
+            this.xskt.cbCollect.receiveCB(this, msg);
         }
     }
 
     public onDisconnected(){
         console.log("Socket disconnected");
-        if(this.xskt.isServer){
-            this.xskt.PopSession(this);
+        if(this.xskt.cbCollect.disconnectCB){
+            this.xskt.cbCollect.disconnectCB(this);
         }
+
+        // if(this.xskt.isServer){
+        //     this.xskt.PopSession(this);
+        // }
     }
 
     public onError(errMsg: string){
         console.log("Socket log error: %s", errMsg);
-        if(this.xskt.isServer){
-            this.xskt.PopSession(this);
+        if(this.xskt.cbCollect.errorCB){
+            this.xskt.cbCollect.errorCB(this, errMsg);
         }
+
+        // if(this.xskt.isServer){
+        //     this.xskt.PopSession(this);
+        // }
     }
 
     public GetSessionCode(): number{

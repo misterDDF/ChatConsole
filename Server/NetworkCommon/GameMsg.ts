@@ -16,6 +16,8 @@ export enum Proto {
     PROTO_LOGIN_RSP = 1002,
     PROTO_REGISTER_REQ = 1003,
     PROTO_REGISTER_RSP = 1004,
+    PROTO_LOGOUT_REQ = 1005,
+    PROTO_LOGOUT_RSP = 1006,
 };
 
 export type ProtoContent = LoginReq | LoginRsp | RegisterReq | RegisterRsp | {}
@@ -37,4 +39,9 @@ export interface RegisterReq{
 
 export interface RegisterRsp{
     isSuccess: boolean
+}
+
+export interface LogoutRsp{
+    isSuccess: true;
+    isForce: boolean;    // 是否为顶号导致的登出
 }

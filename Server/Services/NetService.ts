@@ -1,6 +1,9 @@
-import { GameMsg, Proto } from "../NetworkCommon/GameMsg";
+import { ConstDefine } from "../Common/ConstDefine";
+import { GameMsg, LoginReq, Proto, RegisterReq } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
-import { XNSocket } from "../NetworkCommon/XNSocket";
+import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
+import { LoginSystem } from "../System/LoginSystem";
+import { CacheService } from "./CacheService";
 
 // 基础网络通信服务，主要负责收发包
 export class NetService{
@@ -14,24 +17,53 @@ export class NetService{
     }
 
     public server: XNSocket;
+    private cbCollect: Partial<EXCallbacks>;
 
     public constructor(){
         this.server = new XNSocket();
+        this.cbCollect = {};
     }
 
     public Init(){
-        let port = 80;
-        this.server.StartAsServer(port, this.onReceiveMsg);
+        this.cbCollect = {
+            connectCB: this.onConnect,
+            receiveCB: this.onReceiveMsg,
+            disconnectCB: this.onDisconnect,
+            errorCB: this.onError,
+        }
+        this.server.StartAsServer(ConstDefine.DEFAULT_PORT, this.cbCollect);
+    }
+
+    public onConnect(session: XNSession){
+
     }
 
     // 根据协议号转发数据给相关功能系统
-    public onReceiveMsg(msg: GameMsg){
+    public onReceiveMsg(session:XNSession, msg: GameMsg){
+        if(msg.errMsg !== ""){
+            console.log(msg.errMsg);
+            return;
+        }
+        
         switch(msg.cmd){
             case Proto.PROTO_LOGIN_REQ:
+                LoginSystem.GetInstance().HandleLoginReq(session, msg.content as LoginReq);
                 break;
             case Proto.PROTO_REGISTER_REQ:
+                LoginSystem.GetInstance().HandleRegisterReq(session, msg.content as RegisterReq);
+                break;
+            case Proto.PROTO_LOGOUT_REQ:
+                LoginSystem.GetInstance().HandleLogoutReq(session);
                 break;
         }
+    }
+
+    public onDisconnect(session: XNSession){
+        CacheService.GetInstance().RemovePlayerCache(undefined, session);
+    }
+
+    public onError(session: XNSession, errMsg: string){
+        CacheService.GetInstance().RemovePlayerCache(undefined, session);
     }
 
     public SendMsg(session: XNSession, msg: GameMsg){
