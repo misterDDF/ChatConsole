@@ -1,3 +1,4 @@
+import { Logger } from "../Common/Logger";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { DataService, PlayerData } from "./DataService";
 
@@ -27,13 +28,14 @@ export class CacheService{
             let cache: PlayerCache = {
                 account: account,
                 isOnline: true,
+                isAdmin: account === "admin",
                 session: session,
                 playerData: DataService.GetInstance().GetPlayerData(account) as PlayerData,
             };
             this.playerCacheList.set(account, cache);
         }
         else{
-            console.log("Player cache add failed")
+            Logger.LogError("Player cache add failed!")
         }
     }
 
@@ -58,6 +60,7 @@ export class CacheService{
 export interface PlayerCache{
     account: string,
     isOnline: boolean,
+    isAdmin: boolean,
     session: XNSession,
     playerData: PlayerData,
 }

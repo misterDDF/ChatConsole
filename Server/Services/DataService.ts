@@ -1,3 +1,4 @@
+import { Logger } from "../Common/Logger";
 
 // 类似数据库管理，只处理长期保存的数据
 export class DataService{
@@ -19,7 +20,7 @@ export class DataService{
             return this.playerDataList.get(account) as PlayerData;
         }
         else{
-            console.log("player not found!");
+            Logger.LogError("player not found!");
             return null
         }
     }

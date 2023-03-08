@@ -1,4 +1,5 @@
 import { ConstDefine } from "../Common/ConstDefine";
+import { Logger } from "../Common/Logger";
 import { GameMsg, LoginReq, Proto, RegisterReq } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
@@ -41,7 +42,7 @@ export class NetService{
     // 根据协议号转发数据给相关功能系统
     public onReceiveMsg(session:XNSession, msg: GameMsg){
         if(msg.errMsg !== ""){
-            console.log(msg.errMsg);
+            Logger.Log(msg.errMsg);
             return;
         }
         

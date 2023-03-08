@@ -1,4 +1,5 @@
 import { ConstDefine } from "../Common/ConstDefine";
+import { Logger } from "../Common/Logger";
 import { GameMsg, LoginRsp, LogoutRsp, Proto, RegisterRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
@@ -6,7 +7,7 @@ import { LoginSystem } from "../System/LoginSystem";
 
 export class NetService{
     private static instance: NetService;
-    public static getInstance(): NetService{
+    public static GetInstance(): NetService{
         if(this.instance){
             return this.instance;
         }
@@ -33,6 +34,8 @@ export class NetService{
         }
         this.client.StartAsClient(ConstDefine.DEFAULT_PORT, this.cbCollect);
         this.session = this.client.session as XNSession;
+
+        Logger.Log('NetService init done.')
     }
 
     public SendMsg(msg: GameMsg){
@@ -46,7 +49,7 @@ export class NetService{
     // 根据协议号转发数据给相关功能系统
     public onReceiveMsg(session: XNSession, msg: GameMsg){
         if(msg.errMsg !== ""){
-            console.log(msg.errMsg);
+            Logger.Log(msg.errMsg);
             return;
         }
 
@@ -61,7 +64,7 @@ export class NetService{
                 LoginSystem.GetInstance().HandleLogoutRsp(session, msg.content as LogoutRsp);
                 break;
             default:
-                console.log("Invalid proto string: %s", msg.cmd.toString());
+                Logger.Log(`Invalid proto string: ${msg.cmd.toString()}`);
         }
     }
 
