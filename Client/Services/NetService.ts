@@ -1,8 +1,9 @@
 import { ConstDefine } from "../Common/ConstDefine";
 import { Logger } from "../Common/Logger";
-import { GameMsg, LoginRsp, LogoutRsp, Proto, RegisterRsp } from "../NetworkCommon/GameMsg";
+import { GameMsg, LoginRsp, LogoutRsp, Proto, RegisterRsp, RoomCreateRsp, RoomEnterRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
+import { CenterSystem } from "../System/CenterSystem";
 import { LoginSystem } from "../System/LoginSystem";
 
 export class NetService{
@@ -62,6 +63,15 @@ export class NetService{
                 break;
             case Proto.PROTO_LOGOUT_RSP:
                 LoginSystem.GetInstance().HandleLogoutRsp(session, msg.content as LogoutRsp);
+                break;
+            case Proto.PROTO_ROOM_CREATE_RSP:
+                CenterSystem.GetInstance().HandleRoomCreateRsp(session, msg.content as RoomCreateRsp);
+                break;
+            case Proto.PROTO_ROOM_LIST_RSP:
+                CenterSystem.GetInstance().HandleRoomListRsp(session, msg.content as RoomListRsp);
+                break;
+            case Proto.PROTO_ROOM_ENTER_RSP:
+                CenterSystem.GetInstance().HandleRoomEnterRsp(session, msg.content as RoomEnterRsp);
                 break;
             default:
                 Logger.Log(`Invalid proto string: ${msg.cmd.toString()}`);

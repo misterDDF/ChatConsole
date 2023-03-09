@@ -3,7 +3,7 @@ import { GameMsg, LoginRsp, LogoutRsp, Proto, RegisterRsp } from "../NetworkComm
 import { XNSession } from "../NetworkCommon/XNSession";
 import { SceneDefine } from "../Scene/SceneBase";
 import { NetService } from "../Services/NetService";
-import { SceneService } from "../Services/SceneService";
+import { SceneEvent, SceneService } from "../Services/SceneService";
 
 export class LoginSystem{
     private static instance: LoginSystem;
@@ -35,15 +35,17 @@ export class LoginSystem{
 
     public HandleLoginRsp(session: XNSession, content: LoginRsp){
         Logger.Log("Login success");
-        SceneService.GetInstance().SwitchScene(SceneDefine.Center);
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.login);
     }
 
     public HandleRegisterRsp(session: XNSession, content: RegisterRsp){
         Logger.Log("Register success");
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.register);
     }
 
     public HandleLogoutRsp(session: XNSession, content: LogoutRsp){
         Logger.Log("Logout success");
         SceneService.GetInstance().SwitchScene(SceneDefine.Login);
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.logout);
     }
 }

@@ -50,7 +50,7 @@ export class XNSession{
     }
 
     public onReceiveMsg(msg: GameMsg){
-        console.log("Socket received data");
+        // console.log("Socket received data");
         if(this.xskt.cbCollect.receiveCB){
             this.xskt.cbCollect.receiveCB(this, msg);
         }

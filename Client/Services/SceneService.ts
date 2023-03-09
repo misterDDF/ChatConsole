@@ -4,6 +4,18 @@ import { LoginScene } from "../Scene/LoginScene";
 import { SceneBase, SceneDefine } from "../Scene/SceneBase";
 import { Command } from "./CommandService";
 
+export enum SceneEvent {
+    error = "error",
+    register = "register",
+    login = "login",
+    logout = "logout",
+    room_create = "room_create",
+    room_list = "room_list",
+    room_enter = "room_enter",
+}
+
+export type EventCB = (params?: any[])=>void;
+
 export class SceneService{
     private static instance: SceneService;
     public static GetInstance(): SceneService{
@@ -14,11 +26,48 @@ export class SceneService{
     }
 
     public curScene: SceneBase;
+    private eventRegister: Map<SceneEvent, EventCB[]> = new Map<SceneEvent, EventCB[]>();
+    private eventQue: {eventId: SceneEvent, params?: any[]}[];
     public constructor(){
         this.curScene = new SceneBase();
+        this.eventQue = [];
     }
     public Init(){
         Logger.Log("SceneService init done.");
+        setInterval(()=>{
+            if(this.eventQue.length !== 0){
+                let event = this.eventQue[0];
+                let cbList = this.eventRegister.get(event.eventId);
+                if(cbList){
+                    cbList.forEach(cb => {
+                        cb(event.params);
+                    });
+                }
+                this.eventQue.splice(0);
+            }
+        }, 100);
+    }
+
+    public RegisterSceneEvent(eventId: SceneEvent, cb: EventCB){
+        if(!this.eventRegister.get(eventId)){
+            this.eventRegister.set(eventId, []);
+        }
+        let cbList = this.eventRegister.get(eventId);
+        if(cbList && cbList.indexOf(cb) < 0){
+            cbList.push(cb);
+        }
+    }
+
+    public UnRegisterSceneEvent(eventId: SceneEvent, cb: EventCB){
+        if(!this.eventRegister.get(eventId)){
+            return;
+        }
+        let cbList = this.eventRegister.get(eventId) as EventCB[];
+        cbList.splice(cbList.indexOf(cb));
+    }
+
+    public SendSceneEvent(eventId: SceneEvent, ...params: any){
+        this.eventQue.push({eventId: eventId, params: params});
     }
 
     public SwitchScene(toScene?: SceneDefine){

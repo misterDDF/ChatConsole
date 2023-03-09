@@ -1,3 +1,4 @@
+import { Logger } from "../Common/Logger";
 import { Command } from "../Services/CommandService";
 
 export enum SceneDefine{
@@ -27,5 +28,13 @@ export class SceneBase{
 
     public OnReceiveCommand(cmd: Command){
 
+    }
+
+    protected CheckParamsCount(cmd: Command, countLimit: number): Boolean{
+        if(cmd.params.length !== countLimit){
+            Logger.Log(`Invalid param count for center command: ${cmd.operation}`);
+            return false;
+        }
+        return true;
     }
 }
