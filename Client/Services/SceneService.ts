@@ -1,6 +1,7 @@
 import { Logger } from "../Common/Logger";
 import { CenterScene } from "../Scene/CenterScene";
 import { LoginScene } from "../Scene/LoginScene";
+import { RoomSceen } from "../Scene/RoomScene";
 import { SceneBase, SceneDefine } from "../Scene/SceneBase";
 import { Command } from "./CommandService";
 
@@ -12,6 +13,12 @@ export enum SceneEvent {
     room_create = "room_create",
     room_list = "room_list",
     room_enter = "room_enter",
+    room_leave = "room_leave",
+    chat_say = "chat_say",
+    chat_reply = "chat_reply",
+    chat_roll = "chat_roll",
+    gm_memberlist = "gm_memberlist",
+    gm_kick = "gm_kick",
 }
 
 export type EventCB = (params?: any[])=>void;
@@ -43,7 +50,7 @@ export class SceneService{
                         cb(event.params);
                     });
                 }
-                this.eventQue.splice(0);
+                this.eventQue.splice(0, 1);
             }
         }, 100);
     }
@@ -63,7 +70,7 @@ export class SceneService{
             return;
         }
         let cbList = this.eventRegister.get(eventId) as EventCB[];
-        cbList.splice(cbList.indexOf(cb));
+        cbList.splice(cbList.indexOf(cb), 1);
     }
 
     public SendSceneEvent(eventId: SceneEvent, ...params: any){
@@ -88,6 +95,8 @@ export class SceneService{
                     this.curScene.OnEnterScene();
                     break;
                 case SceneDefine.Room:
+                    this.curScene = RoomSceen.GetInstance();
+                    this.curScene.OnEnterScene();
                     break;
                 default:
                     Logger.LogError("Scene switch error!");

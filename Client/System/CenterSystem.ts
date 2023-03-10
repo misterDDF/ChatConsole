@@ -1,5 +1,5 @@
 import { Logger } from "../Common/Logger";
-import { GameMsg, Proto, RoomCreateReq, RoomEnterReq, RoomCreateRsp, RoomEnterRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
+import { GameMsg, Proto, RoomCreateReq, RoomEnterReq, RoomCreateRsp, RoomEnterRsp, RoomListRsp, RoomLeaveRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { NetService } from "../Services/NetService";
 import { SceneEvent, SceneService } from "../Services/SceneService";
@@ -34,6 +34,11 @@ export class CenterSystem{
         NetService.GetInstance().SendMsg(msg);
     }
 
+    public SendRoomLeave(){
+        let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_LEAVE_REQ, "", {});
+        NetService.GetInstance().SendMsg(msg);
+    }
+
     public HandleRoomCreateRsp(session: XNSession, content: RoomCreateRsp){
         Logger.Log(`Room create success, RoomId:{${content.roomId}}`);
         SceneService.GetInstance().SendSceneEvent(SceneEvent.room_create);
@@ -47,5 +52,10 @@ export class CenterSystem{
     public HandleRoomEnterRsp(session: XNSession, content: RoomEnterRsp){
         Logger.Log(`Room enter success, RoomId:{${content.roomId}}`);
         SceneService.GetInstance().SendSceneEvent(SceneEvent.room_enter);
+    }
+
+    public HandleRoomLeaveRsp(session: XNSession, content: RoomLeaveRsp){
+        Logger.Log(`Room leave success, RoomId:{${content.roomId}}`);
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.room_leave, content.isForce);
     }
 }

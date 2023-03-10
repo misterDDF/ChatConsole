@@ -1,9 +1,10 @@
 import { ConstDefine } from "../Common/ConstDefine";
 import { Logger } from "../Common/Logger";
-import { GameMsg, LoginReq, Proto, RegisterReq, RoomCreateReq, RoomEnterReq } from "../NetworkCommon/GameMsg";
+import { ChatReplyReq, ChatSayReq, GameMsg, GMKickReq, LoginReq, Proto, RegisterReq, RoomCreateReq, RoomEnterReq } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
 import { CenterSystem } from "../System/CenterSystem";
+import { ChatSystem } from "../System/ChatSystem";
 import { LoginSystem } from "../System/LoginSystem";
 import { CacheService } from "./CacheService";
 
@@ -65,6 +66,24 @@ export class NetService{
                 break;
             case Proto.PROTO_ROOM_ENTER_REQ:
                 CenterSystem.GetInstance().HandleRoomEnterReq(session, msg.content as RoomEnterReq);
+                break;
+            case Proto.PROTO_ROOM_LEAVE_REQ:
+                CenterSystem.GetInstance().HandleRoomLeaveReq(session);
+                break;
+            case Proto.PROTO_CHAT_SAY_REQ:
+                ChatSystem.GetInstance().HandleChatSayReq(session, msg.content as ChatSayReq);
+                break;
+            case Proto.PROTO_CHAT_REPLY_REQ:
+                ChatSystem.GetInstance().HandleChatReplyReq(session, msg.content as ChatReplyReq);
+                break;
+            case Proto.PROTO_CHAT_ROLL_REQ:
+                ChatSystem.GetInstance().HandleChatRollReq(session);
+                break;
+            case Proto.PROTO_GM_MEMBERLIST_REQ:
+                ChatSystem.GetInstance().HandleGMMemberListReq(session);
+                break;
+            case Proto.PROTO_GM_KICK_REQ:
+                ChatSystem.GetInstance().HandleGMKickReq(session, msg.content as GMKickReq);
                 break;
             default:
                 Logger.Log(`Invalid proto string: ${msg.cmd.toString()}`);

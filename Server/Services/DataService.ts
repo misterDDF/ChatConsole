@@ -13,6 +13,11 @@ export class DataService{
     public playerDataList: Map<string, PlayerData> = new Map<string, PlayerData>();
     public Init(){
         this.playerDataList.clear();
+
+        // 调试用的gm账号和两个默认普通账号
+        this.CreatePlayerData("admin", "123456");
+        this.CreatePlayerData("user1", "123456");
+        this.CreatePlayerData("user2", "123456");
     }
 
     public GetPlayerData(account: string): PlayerData | null{

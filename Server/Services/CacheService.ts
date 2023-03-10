@@ -40,6 +40,8 @@ export class CacheService{
                 isAdmin: account === "admin",
                 session: session,
                 roomId: -1,
+                firstLineIndex: 0,
+                curLineIndex: 0,
             };
             this.playerCacheList.set(account, cache);
         }
@@ -98,10 +100,10 @@ export class CacheService{
                     roomId: i,
                     roomName: roomName,
                     state: {roomId: i, members: []},
+                    chatHistory: [{account: "SYSTEM", text: "CHAT HEAD"}],
                     emptyTime: 0,
                 };
                 this.roomCacheList.set(i, room);
-                this.AddMemeberToRoom(roomId, player);
                 break;
             }
         }
@@ -112,15 +114,20 @@ export class CacheService{
     public AddMemeberToRoom(roomId: number, player: PlayerCache){
         let room = this.GetRoomCache(roomId);
         if(room && room.state.members.indexOf(player)<0){
-            room.state.members.push(player);
             player.roomId = roomId;
+            player.firstLineIndex = 0;
+            player.curLineIndex = 0;
+            room.state.members.push(player);
         }
     }
 
     public RemoveMemeberFromRoom(roomId: number, player: PlayerCache){
         let room = this.GetRoomCache(roomId);
         if(room && room.state.members.indexOf(player)>=0){
-            room.state.members.splice(room.state.members.indexOf(player));
+            player.roomId = -1;
+            player.firstLineIndex = 0;
+            player.curLineIndex = 0;
+            room.state.members.splice(room.state.members.indexOf(player), 1);
         }
     }
 
@@ -158,7 +165,9 @@ export interface PlayerCache{
     isOnline: boolean,
     isAdmin: boolean,
     session: XNSession,
-    roomId: number,
+    roomId: number, // 玩家所在房间
+    firstLineIndex: number, // 玩家进入聊天室的第一行聊天行号
+    curLineIndex: number,  // 玩家所在房间最新的聊天行号
 }
 
 // 大厅房间的定义
@@ -166,6 +175,7 @@ export interface RoomCache{
     roomId: number,
     roomName: string,
     state: RoomState,
+    chatHistory: {account: string, text: string}[],
     emptyTime: number,  // 房间已闲置的时间
 }
 

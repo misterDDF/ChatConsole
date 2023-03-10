@@ -1,8 +1,8 @@
 import { ConstDefine } from "../Common/ConstDefine";
 import { ErrorCode } from "../NetworkCommon/ErrorCode";
-import { GameMsg, Proto, RoomCreateReq, RoomCreateRsp, RoomEnterReq, RoomEnterRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
+import { GameMsg, Proto, RoomCreateReq, RoomCreateRsp, RoomEnterReq, RoomEnterRsp, RoomLeaveRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
-import { CacheService, PlayerCache, RoomCache } from "../Services/CacheService";
+import { CacheService, PlayerCache } from "../Services/CacheService";
 import { NetService } from "../Services/NetService";
 
 // 大厅房间数据管理
@@ -19,6 +19,13 @@ export class CenterSystem{
         setInterval(()=>{
             CacheService.GetInstance().UpdateAllRoomCache();
         }, ConstDefine.ROOM_UPDATE_TIME);
+    }
+
+    public SendRoomLeaveRsp(session: XNSession, player: PlayerCache, isForce: boolean){
+        let _content: RoomLeaveRsp = {isSuccess: true, roomId: player.roomId, isForce: isForce};
+        let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_LEAVE_RSP, "", _content);
+        NetService.GetInstance().SendMsg(session, msg);
+        CacheService.GetInstance().RemoveMemeberFromRoom(player.roomId, player);
     }
 
     public HandleRoomCreateReq(session: XNSession, content: RoomCreateReq){
@@ -44,6 +51,7 @@ export class CenterSystem{
         let _content: RoomCreateRsp = {isSuccess: true, roomId: roomId};
         let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_CREATE_RSP, "", _content);
         NetService.GetInstance().SendMsg(session, msg);
+        CacheService.GetInstance().AddMemeberToRoom(roomId, player);
     }
 
     public HandleRoomListReq(session: XNSession){
@@ -85,5 +93,28 @@ export class CenterSystem{
         let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_ENTER_RSP, "", _content);
         NetService.GetInstance().SendMsg(session, msg);
         CacheService.GetInstance().AddMemeberToRoom(content.roomId, player);
+    }
+
+    public HandleRoomLeaveReq(session: XNSession){
+        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        if(!player){
+            let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
+            let errMsg = `{errorCode: ${errorCode}} Player not found, leave room failed`;
+            let _content: RoomLeaveRsp = {isSuccess: false, roomId: -1, isForce: false};
+            let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_LEAVE_RSP, errMsg, _content);
+            NetService.GetInstance().SendMsg(session, msg);
+            return;
+        }
+        let room = CacheService.GetInstance().GetRoomCache(player.roomId);
+        if(!room){
+            let errorCode = ErrorCode.ROOM_ID_NOTEXIST.toString();
+            let errMsg = `{errorCode: ${errorCode}} Room id not exist, leave room failed`;
+            let _content: RoomLeaveRsp = {isSuccess: false, roomId: -1, isForce: false};
+            let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_LEAVE_RSP, errMsg, _content);
+            NetService.GetInstance().SendMsg(session, msg);
+            return;
+        }
+
+        this.SendRoomLeaveRsp(session, player, false);
     }
 }

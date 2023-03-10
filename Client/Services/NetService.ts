@@ -1,9 +1,10 @@
 import { ConstDefine } from "../Common/ConstDefine";
 import { Logger } from "../Common/Logger";
-import { GameMsg, LoginRsp, LogoutRsp, Proto, RegisterRsp, RoomCreateRsp, RoomEnterRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
+import { ChatReplyRsp, ChatRollRsp, ChatSayRsp, GameMsg, GMKickRsp, GMMemberListRsp, LoginRsp, LogoutRsp, Proto, RegisterRsp, RoomCreateRsp, RoomEnterRsp, RoomLeaveRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
 import { CenterSystem } from "../System/CenterSystem";
+import { ChatSystem } from "../System/ChatSystem";
 import { LoginSystem } from "../System/LoginSystem";
 
 export class NetService{
@@ -72,6 +73,24 @@ export class NetService{
                 break;
             case Proto.PROTO_ROOM_ENTER_RSP:
                 CenterSystem.GetInstance().HandleRoomEnterRsp(session, msg.content as RoomEnterRsp);
+                break;
+            case Proto.PROTO_ROOM_LEAVE_RSP:
+                CenterSystem.GetInstance().HandleRoomLeaveRsp(session, msg.content as RoomLeaveRsp);
+                break;
+            case Proto.PROTO_CHAT_SAY_RSP:
+                ChatSystem.GetInstance().HandleChatSayRsp(session, msg.content as ChatSayRsp);
+                break;
+            case Proto.PROTO_CHAT_REPLY_RSP:
+                ChatSystem.GetInstance().HandleChatReplyRsp(session, msg.content as ChatReplyRsp);
+                break;
+            case Proto.PROTO_CHAT_ROLL_RSP:
+                ChatSystem.GetInstance().HandleChatRollRsp(session, msg.content as ChatRollRsp);
+                break;
+            case Proto.PROTO_GM_MEMBERLIST_RSP:
+                ChatSystem.GetInstance().HandleGMMemberListRsp(session, msg.content as GMMemberListRsp);
+                break;
+            case Proto.PROTO_GM_KICK_RSP:
+                ChatSystem.GetInstance().HandleGMKickRsp(session, msg.content as GMKickRsp);
                 break;
             default:
                 Logger.Log(`Invalid proto string: ${msg.cmd.toString()}`);

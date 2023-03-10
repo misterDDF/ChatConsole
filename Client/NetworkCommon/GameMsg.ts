@@ -26,14 +26,27 @@ export enum Proto {
     PROTO_ROOM_LIST_RSP = 2004,
     PROTO_ROOM_ENTER_REQ = 2005,
     PROTO_ROOM_ENTER_RSP = 2006,
+    PROTO_ROOM_LEAVE_REQ = 2007,
+    PROTO_ROOM_LEAVE_RSP = 2008,
 
-    // 房间相关
+    // 房间内相关
+    PROTO_CHAT_SAY_REQ = 3001,
+    PROTO_CHAT_SAY_RSP = 3002,
+    PROTO_CHAT_REPLY_REQ = 3003,
+    PROTO_CHAT_REPLY_RSP = 3004,
+    PROTO_CHAT_ROLL_REQ = 3005,
+    PROTO_CHAT_ROLL_RSP = 3006,
 
     // GM指令
+    PROTO_GM_MEMBERLIST_REQ = 114514,
+    PROTO_GM_MEMBERLIST_RSP = 114515,
+    PROTO_GM_KICK_REQ = 114516,
+    PROTO_GM_KICK_RSP = 114517,
 };
 
 export type ProtoContent = LoginReq | LoginRsp | RegisterReq | RegisterRsp | RoomCreateRsp | RoomListRsp | 
-                            RoomEnterReq | RoomEnterRsp | {}
+                            RoomEnterReq | RoomEnterRsp | RoomLeaveRsp | ChatSayReq | ChatSayRsp | ChatReplyReq |
+                            ChatReplyRsp | ChatRollRsp | GMMemberListRsp | GMKickReq | GMKickRsp | {}
 
 export interface LoginReq {
     account: string;
@@ -86,4 +99,48 @@ export interface RoomEnterReq{
 export interface RoomEnterRsp{
     isSuccess: boolean;
     roomId: number;
+}
+
+export interface RoomLeaveRsp{
+    isSuccess: boolean;
+    roomId: number;
+    isForce: boolean;
+}
+
+export interface ChatSayReq{
+    text: string;
+}
+
+export interface ChatSayRsp{
+    text: string;
+}
+
+export interface ChatReplyReq{
+    line: number;
+    text: string;
+}
+
+export interface ChatReplyRsp{
+    text: string;
+}
+
+export interface ChatRollRsp{
+    isSuccess: boolean;
+}
+
+export interface PlayerInfo{
+    account: string;
+}
+
+export interface GMMemberListRsp{
+    isSuccess: boolean;
+    memberInfos: PlayerInfo[];
+}
+
+export interface GMKickReq{
+    account: string;
+}
+
+export interface GMKickRsp{
+    isSuccess: boolean;
 }

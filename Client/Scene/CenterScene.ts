@@ -5,7 +5,7 @@ import { Command } from "../Services/CommandService";
 import { SceneEvent, SceneService } from "../Services/SceneService";
 import { CenterSystem } from "../System/CenterSystem";
 import { LoginSystem } from "../System/LoginSystem";
-import { SceneBase } from "./SceneBase";
+import { SceneBase, SceneDefine } from "./SceneBase";
 
 enum CenterCommandType{
     none = 'none',
@@ -73,12 +73,13 @@ export class CenterScene extends SceneBase{
                 }
                 break;
             default:
-                Logger.LogError(`Invalid login scene command: ${cmd.operation}`);
+                Logger.LogError(`Invalid center scene command: ${cmd.operation}`);
         }
     }
 
     public DisplayRoomCreate(params?: any[]){
-
+        console.log("Room create success, jump to romm scene.");
+        SceneService.GetInstance().SwitchScene(SceneDefine.Room);
     }
 
     public DisplayRoomList(params?: any[]){
@@ -92,6 +93,7 @@ export class CenterScene extends SceneBase{
     }
 
     public DisplayRoomEnter(params?: any[]){
-
+        console.log("Room enter success, jump to romm scene.");
+        SceneService.GetInstance().SwitchScene(SceneDefine.Room);
     }
 }
