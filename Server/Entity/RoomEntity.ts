@@ -85,6 +85,22 @@ export class RoomEntity{
         });
     }
 
+    public BroadcastMention(account: string){
+        this.members.forEach(member=>{
+            if(member.account === account){
+                ChatSystem.GetInstance().SendChatMemtion(member.session, account);
+            }
+        });
+    }
+
+    public CheckMention(text: string){
+        this.members.forEach(member => {
+            if(text.includes("@"+member.account)){
+                this.BroadcastMention(member.account);
+            }
+        });
+    }
+
     public CalRollResult(): boolean{
         let top: RollResult = {account: this.rollMembers[0].account, score: Math.floor(Math.random()*100)};
         let rollResult: RollResult[] = [top];

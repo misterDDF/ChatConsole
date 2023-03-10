@@ -1,7 +1,7 @@
 import { PlayerEntity } from "../Entity/PlayerEntity";
 import { RoomEntity } from "../Entity/RoomEntity";
 import { ErrorCode } from "../NetworkCommon/ErrorCode";
-import { ChatReplyReq, ChatReplyRsp, ChatRollHint, ChatRollResult, ChatRollRsp, ChatSayReq, ChatSayRsp, GameMsg, GMKickReq, GMKickRsp, GMMemberListRsp, PlayerInfo, Proto, RollHintType } from "../NetworkCommon/GameMsg";
+import { ChatMemtion, ChatReplyReq, ChatReplyRsp, ChatRollHint, ChatRollResult, ChatRollRsp, ChatSayReq, ChatSayRsp, GameMsg, GMKickReq, GMKickRsp, GMMemberListRsp, PlayerInfo, Proto, RollHintType } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { CacheService } from "../Services/CacheService";
 import { NetService } from "../Services/NetService";
@@ -33,6 +33,12 @@ export class ChatSystem{
         NetService.GetInstance().SendMsg(session, msg);
     }
 
+    public SendChatMemtion(session: XNSession, account: string){
+        let content: ChatMemtion = {account: account};
+        let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_MEMTION, "", content);
+        NetService.GetInstance().SendMsg(session, msg);
+    }
+
     public HandleChatSayReq(session: XNSession, content: ChatSayReq){
         let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
@@ -60,6 +66,7 @@ export class ChatSystem{
             member.curLineIndex++;
             NetService.GetInstance().SendMsg(member.session, msg); 
         });
+        room.CheckMention(content.text);
         room.chatHistory.push({account: player?.account, text: content.text});
     }
 
@@ -100,6 +107,7 @@ export class ChatSystem{
             member.curLineIndex++;
             NetService.GetInstance().SendMsg(member.session, msg); 
         });
+        room.CheckMention(content.text);
         room.chatHistory.push({account: player?.account, text: content.text});
     }
 

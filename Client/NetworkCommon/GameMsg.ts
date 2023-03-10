@@ -38,6 +38,7 @@ export enum Proto {
     PROTO_CHAT_ROLL_RSP = 3006,
     PROTO_CHAT_ROLL_HINT = 3007,
     PROTO_CHAT_ROLL_RESULT = 3008,
+    PROTO_CHAT_MEMTION = 3009,
 
     // GM指令
     PROTO_GM_MEMBERLIST_REQ = 114514,
@@ -149,6 +150,10 @@ export interface RollResult{
 export interface ChatRollResult{
     result: RollResult[];
     top: RollResult,
+}
+
+export interface ChatMemtion{
+    account: string,
 }
 
 export interface PlayerInfo{

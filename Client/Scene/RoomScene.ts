@@ -40,6 +40,7 @@ export class RoomSceen extends SceneBase{
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_roll, this.DisplayChatRoll);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_roll_hint, this.DisplayChatRollHint);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_roll_result, this.DisplayChatRollResult);
+        SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_memtion, this.DisplayChatMemtion);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.gm_memberlist, this.DisplayGMMemberList);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.gm_kick, this.DisplayGMKick);
 
@@ -55,6 +56,7 @@ export class RoomSceen extends SceneBase{
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_roll, this.DisplayChatRoll);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_roll_hint, this.DisplayChatRollHint);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_roll_result, this.DisplayChatRollResult);
+        SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_memtion, this.DisplayChatMemtion);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.gm_memberlist, this.DisplayGMMemberList);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.gm_kick, this.DisplayGMKick);
 
@@ -164,6 +166,13 @@ export class RoomSceen extends SceneBase{
             rollResult.forEach(res => {
                 console.log(`account: ${res.account} score: ${res.score}`);
             });
+        }
+    }
+
+    public DisplayChatMemtion(params?: any[]){
+        if(params){
+            let account: string = params[0];
+            console.log(`${account} has mentioned you.`);
         }
     }
 
