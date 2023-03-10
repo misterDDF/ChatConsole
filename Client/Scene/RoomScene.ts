@@ -1,5 +1,6 @@
+import { ConstDefine } from "../Common/ConstDefine";
 import { Logger } from "../Common/Logger";
-import { PlayerInfo } from "../NetworkCommon/GameMsg";
+import { PlayerInfo, RollHintType, RollResult } from "../NetworkCommon/GameMsg";
 import { Command } from "../Services/CommandService";
 import { SceneEvent, SceneService } from "../Services/SceneService";
 import { CenterSystem } from "../System/CenterSystem";
@@ -37,6 +38,8 @@ export class RoomSceen extends SceneBase{
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_say, this.DisplayChatSay);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_reply, this.DisplayChatReply);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_roll, this.DisplayChatRoll);
+        SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_roll_hint, this.DisplayChatRollHint);
+        SceneService.GetInstance().RegisterSceneEvent(SceneEvent.chat_roll_result, this.DisplayChatRollResult);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.gm_memberlist, this.DisplayGMMemberList);
         SceneService.GetInstance().RegisterSceneEvent(SceneEvent.gm_kick, this.DisplayGMKick);
 
@@ -50,6 +53,8 @@ export class RoomSceen extends SceneBase{
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_say, this.DisplayChatSay);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_reply, this.DisplayChatReply);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_roll, this.DisplayChatRoll);
+        SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_roll_hint, this.DisplayChatRollHint);
+        SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.chat_roll_result, this.DisplayChatRollResult);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.gm_memberlist, this.DisplayGMMemberList);
         SceneService.GetInstance().UnRegisterSceneEvent(SceneEvent.gm_kick, this.DisplayGMKick);
 
@@ -123,7 +128,43 @@ export class RoomSceen extends SceneBase{
     }
 
     public DisplayChatRoll(params?: any[]){
+        console.log("Join roll game success");
+    }
 
+    public DisplayChatRollHint(params?: any[]){
+        if(params){
+            let hintType: RollHintType = params[0];
+            let countDown: number = params[1];
+
+            if(hintType === RollHintType.active){
+                let text = `Roll game is activated, you can still join in ${ConstDefine.ROLL_ACTIVE_TIME/1000 - countDown} seconds.`;
+                console.log(text);
+            }
+            else if(hintType === RollHintType.start){
+                let text = `Roll game will be started in ${ConstDefine.ROLL_START_TIME/1000 - countDown} seconds.`;
+                console.log(text);
+            }
+            else{
+                Logger.LogError("Invalid roll hint type!");
+            }
+        }
+    }
+
+    public DisplayChatRollResult(params?: any[]){
+        if(params){
+            let rollResult: RollResult[] = params[0];
+            let top: RollResult = params[1];
+
+            if(top.account === ""){
+                console.log(`No top score, game will restart in ${ConstDefine.ROLL_RESTART_MAX} seconds.`);
+            }
+            else{
+                console.log(`Top roll account: ${top.account}, score: ${top.score}`);
+            }
+            rollResult.forEach(res => {
+                console.log(`account: ${res.account} score: ${res.score}`);
+            });
+        }
     }
 
     public DisplayGMMemberList(params?: any[]){

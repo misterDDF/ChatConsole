@@ -91,11 +91,11 @@ export class NetService{
     }
 
     public onDisconnect(session: XNSession){
-        CacheService.GetInstance().RemovePlayerCache(undefined, session);
+        CacheService.GetInstance().RemovePlayerEntity(undefined, session);
     }
 
     public onError(session: XNSession, errMsg: string){
-        CacheService.GetInstance().RemovePlayerCache(undefined, session);
+        CacheService.GetInstance().RemovePlayerEntity(undefined, session);
     }
 
     public SendMsg(session: XNSession, msg: GameMsg){

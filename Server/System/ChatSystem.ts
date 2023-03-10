@@ -1,9 +1,12 @@
+import { PlayerEntity } from "../Entity/PlayerEntity";
+import { RoomEntity } from "../Entity/RoomEntity";
 import { ErrorCode } from "../NetworkCommon/ErrorCode";
-import { ChatReplyReq, ChatReplyRsp, ChatSayReq, ChatSayRsp, GameMsg, GMKickReq, GMKickRsp, GMMemberListRsp, PlayerInfo, Proto } from "../NetworkCommon/GameMsg";
+import { ChatReplyReq, ChatReplyRsp, ChatRollHint, ChatRollResult, ChatRollRsp, ChatSayReq, ChatSayRsp, GameMsg, GMKickReq, GMKickRsp, GMMemberListRsp, PlayerInfo, Proto, RollHintType } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
-import { CacheService, PlayerCache, RoomCache } from "../Services/CacheService";
+import { CacheService } from "../Services/CacheService";
 import { NetService } from "../Services/NetService";
 import { CenterSystem } from "./CenterSystem";
+import { RollResult } from "../NetworkCommon/GameMsg";
 
 export class ChatSystem{
     private static instance: ChatSystem;
@@ -18,8 +21,20 @@ export class ChatSystem{
 
     }
 
+    public SendChatRollHint(session: XNSession, hintType: RollHintType, countDown: number){
+        let content: ChatRollHint = {hintType: hintType, countDown: countDown};
+        let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_HINT, "", content);
+        NetService.GetInstance().SendMsg(session, msg);
+    }
+
+    public SendChatRollResult(session: XNSession, result: RollResult[], top: RollResult){
+        let conetnt: ChatRollResult = {result: result, top: top};
+        let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_RESULT, "", conetnt);
+        NetService.GetInstance().SendMsg(session, msg);
+    }
+
     public HandleChatSayReq(session: XNSession, content: ChatSayReq){
-        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
             let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
             let errMsg = `{errorCode: ${errorCode}} Player not found, say text failed`;
@@ -38,7 +53,7 @@ export class ChatSystem{
             return;
         }
 
-        room.state.members.forEach(member => {
+        room.GetMembers().forEach(member => {
             let text = `[line_${member.curLineIndex - member.firstLineIndex + 1}]@${player?.account}: ${content.text}`;
             let _content: ChatSayRsp = {text: text};
             let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_SAY_RSP, "", _content);
@@ -49,7 +64,7 @@ export class ChatSystem{
     }
 
     public HandleChatReplyReq(session: XNSession, content: ChatReplyReq){
-        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
             let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
             let errMsg = `{errorCode: ${errorCode}} Player not found, reply text failed`;
@@ -76,8 +91,8 @@ export class ChatSystem{
             return;
         }
 
-        room.state.members.forEach(member => {
-            let preChat = (room as RoomCache).chatHistory[(player as PlayerCache).firstLineIndex + content.line];
+        room.GetMembers().forEach(member => {
+            let preChat = (room as RoomEntity).chatHistory[(player as PlayerEntity).firstLineIndex + content.line];
             let replyText = `Reply to >>> @${preChat.account}: ${preChat.text}`;
             let text = `[line_${member.curLineIndex + 1}]@${player?.account}: ${content.text}`;
             let _content: ChatSayRsp = {text: replyText + "\n" + text};
@@ -89,11 +104,49 @@ export class ChatSystem{
     }
 
     public HandleChatRollReq(session: XNSession){
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
+        if(!player){
+            let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
+            let errMsg = `{errorCode: ${errorCode}} Player not found, join roll game failed`;
+            let _content: ChatRollRsp = {isSuccess: false};
+            let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_RSP, errMsg, _content);
+            NetService.GetInstance().SendMsg(session, msg);
+            return;
+        }
+        let room = CacheService.GetInstance().GetRoomCache(player.roomId);
+        if(!room){
+            let errorCode = ErrorCode.CHAT_ROOM_NOTFOUND.toString();
+            let errMsg = `{errorCode: ${errorCode}} Room not found, join roll game failed`;
+            let _content: ChatRollRsp = {isSuccess: false};
+            let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_RSP, errMsg, _content);
+            NetService.GetInstance().SendMsg(session, msg);
+            return;
+        }
+        if(room.IsRollerStart()){
+            let errorCode = ErrorCode.CHAT_ROLL_STARTED.toString();
+            let errMsg = `{errorCode: ${errorCode}} Roll game has been activated, join roll game failed`;
+            let _content: ChatRollRsp = {isSuccess: false};
+            let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_RSP, errMsg, _content);
+            NetService.GetInstance().SendMsg(session, msg);
+            return;
+        }
+        if(room.IsPlayerJoinRoll(player)){
+            let errorCode = ErrorCode.CHAT_ROLL_JOINED.toString();
+            let errMsg = `{errorCode: ${errorCode}} Player is in game currently, join roll game failed`;
+            let _content: ChatRollRsp = {isSuccess: false};
+            let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_RSP, errMsg, _content);
+            NetService.GetInstance().SendMsg(session, msg);
+            return;
+        }
 
+        let _content: ChatRollRsp = {isSuccess: true};
+        let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_RSP, "", _content);
+        NetService.GetInstance().SendMsg(session, msg);
+        room.AcceptRollReq(player);
     }
 
     public HandleGMMemberListReq(session: XNSession){
-        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
             let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
             let errMsg = `{errorCode: ${errorCode}} Player not found, member list acquire denied`;
@@ -121,8 +174,8 @@ export class ChatSystem{
         }
 
         let memberInfos: PlayerInfo[] = [];
-        room.state.members.forEach(member => {
-            memberInfos.push({account: member.account});
+        room.GetMembers().forEach(member => {
+            memberInfos.push({account: member.account, rollValue: 0});
         });
         let _content: GMMemberListRsp = {isSuccess: true, memberInfos: memberInfos};
         let msg: GameMsg = new GameMsg(Proto.PROTO_GM_MEMBERLIST_RSP, "", _content);
@@ -130,7 +183,7 @@ export class ChatSystem{
     }
 
     public HandleGMKickReq(session: XNSession, content: GMKickReq){
-        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
             let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
             let errMsg = `{errorCode: ${errorCode}} Player not found, member kick failed`;
@@ -156,8 +209,8 @@ export class ChatSystem{
             NetService.GetInstance().SendMsg(session, msg);
             return;
         }
-        let kickPlayer = CacheService.GetInstance().GetPlayerCache(content.account);
-        if(!kickPlayer || room.state.members.indexOf(kickPlayer)<0){
+        let kickPlayer = CacheService.GetInstance().GetPlayerEntity(content.account);
+        if(!kickPlayer || !room.ContainsPlayer(kickPlayer)){
             let errorCode = ErrorCode.CHAT_ROOM_NOTFOUND.toString();
             let errMsg = `{errorCode: ${errorCode}} Kick member account not found, member kick failed`;
             let _content: GMKickRsp = {isSuccess: false};

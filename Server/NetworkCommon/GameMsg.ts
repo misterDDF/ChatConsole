@@ -36,6 +36,8 @@ export enum Proto {
     PROTO_CHAT_REPLY_RSP = 3004,
     PROTO_CHAT_ROLL_REQ = 3005,
     PROTO_CHAT_ROLL_RSP = 3006,
+    PROTO_CHAT_ROLL_HINT = 3007,
+    PROTO_CHAT_ROLL_RESULT = 3008,
 
     // GM指令
     PROTO_GM_MEMBERLIST_REQ = 114514,
@@ -46,7 +48,8 @@ export enum Proto {
 
 export type ProtoContent = LoginReq | LoginRsp | RegisterReq | RegisterRsp | RoomCreateRsp | RoomListRsp | 
                             RoomEnterReq | RoomEnterRsp | RoomLeaveRsp | ChatSayReq | ChatSayRsp | ChatReplyReq |
-                            ChatReplyRsp | ChatRollRsp | GMMemberListRsp | GMKickReq | GMKickRsp | {}
+                            ChatReplyRsp | ChatRollRsp | GMMemberListRsp | GMKickReq | GMKickRsp | ChatRollHint |
+                            ChatRollResult | {}
 
 export interface LoginReq {
     account: string;
@@ -128,8 +131,29 @@ export interface ChatRollRsp{
     isSuccess: boolean;
 }
 
+export enum RollHintType{
+    active = 1,
+    start = 2,
+}
+
+export interface ChatRollHint{
+    hintType: RollHintType;
+    countDown: number;
+}
+
+export interface RollResult{
+    account: string,
+    score: number,
+}
+
+export interface ChatRollResult{
+    result: RollResult[];
+    top: RollResult,
+}
+
 export interface PlayerInfo{
     account: string;
+    rollValue: number;
 }
 
 export interface GMMemberListRsp{

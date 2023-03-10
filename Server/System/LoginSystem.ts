@@ -43,14 +43,14 @@ export class LoginSystem{
         NetService.GetInstance().SendMsg(session, msg);
 
         // 顶号把之前的session下线掉
-        let playerCache = CacheService.GetInstance().GetPlayerCache(content.account);
+        let playerCache = CacheService.GetInstance().GetPlayerEntity(content.account);
         if(playerCache){
             let __content: LogoutRsp = {isSuccess: true, isForce: true};
             let _msg: GameMsg = new GameMsg(Proto.PROTO_LOGOUT_RSP, "", __content);
             NetService.GetInstance().SendMsg(playerCache.session, _msg)
-            CacheService.GetInstance().RemovePlayerCache(undefined, playerCache.session);
+            CacheService.GetInstance().RemovePlayerEntity(undefined, playerCache.session);
         }
-        CacheService.GetInstance().AddPlayerCache(playerData.account, session);
+        CacheService.GetInstance().AddPlayerEntity(playerData.account, session);
     }
 
     public HandleRegisterReq(session: XNSession, content: RegisterReq){
@@ -90,6 +90,6 @@ export class LoginSystem{
         let _content: LogoutRsp = {isSuccess: true, isForce: false};
         let msg: GameMsg = new GameMsg(Proto.PROTO_LOGOUT_RSP, "", _content);
         NetService.GetInstance().SendMsg(session, msg);
-        CacheService.GetInstance().RemovePlayerCache(undefined, session);
+        CacheService.GetInstance().RemovePlayerEntity(undefined, session);
     }
 }

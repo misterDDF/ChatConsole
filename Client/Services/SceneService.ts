@@ -17,6 +17,8 @@ export enum SceneEvent {
     chat_say = "chat_say",
     chat_reply = "chat_reply",
     chat_roll = "chat_roll",
+    chat_roll_hint = "chat_roll_hint",
+    chat_roll_result = "chat_roll_result",
     gm_memberlist = "gm_memberlist",
     gm_kick = "gm_kick",
 }

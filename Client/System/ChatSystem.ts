@@ -1,4 +1,4 @@
-import { ChatReplyReq, ChatReplyRsp, ChatRollRsp, ChatSayReq, ChatSayRsp, GameMsg, GMKickReq, GMKickRsp, GMMemberListRsp, Proto } from "../NetworkCommon/GameMsg";
+import { ChatReplyReq, ChatReplyRsp, ChatRollHint, ChatRollResult, ChatRollRsp, ChatSayReq, ChatSayRsp, GameMsg, GMKickReq, GMKickRsp, GMMemberListRsp, Proto } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { NetService } from "../Services/NetService";
 import { SceneEvent, SceneService } from "../Services/SceneService";
@@ -29,7 +29,8 @@ export class ChatSystem{
     }
 
     public SendChatRollReq(){
-
+        let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_ROLL_REQ, "", {});
+        NetService.GetInstance().SendMsg(msg);
     }
 
     public SendGMMemberListReq(){
@@ -52,7 +53,15 @@ export class ChatSystem{
     }
 
     public HandleChatRollRsp(session: XNSession, content: ChatRollRsp){
-        
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.chat_roll);
+    }
+
+    public HandleChatRollHint(session: XNSession, content: ChatRollHint){
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.chat_roll_hint, content.hintType, content.countDown);
+    }
+
+    public HandleChatRollResult(session: XNSession, content: ChatRollResult){
+        SceneService.GetInstance().SendSceneEvent(SceneEvent.chat_roll_result, content.result, content.top);
     }
 
     public HandleGMMemberListRsp(session: XNSession, content: GMMemberListRsp){

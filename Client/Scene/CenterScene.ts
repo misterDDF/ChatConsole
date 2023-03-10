@@ -87,7 +87,7 @@ export class CenterScene extends SceneBase{
             let roomList: RoomInfo[] = params[0];
             console.log('Room list fetch success, show room info.')
             roomList.forEach(roomInfo => {
-                console.log(`${roomInfo.roomId}) Name: ${roomInfo.roomName} Member: ${roomInfo.curMemberCount}/${ConstDefine.MAX_MEMBER_COUNT}\n`);
+                console.log(`${roomInfo.roomId}) Name: ${roomInfo.roomName} Member: ${roomInfo.curMemberCount}/${ConstDefine.MAX_MEMBER_COUNT}`);
             });
         }
     }

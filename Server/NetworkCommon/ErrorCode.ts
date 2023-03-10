@@ -17,6 +17,8 @@ export enum ErrorCode{
     // 聊天错误码
     CHAT_ROOM_NOTFOUND = 13001, // 聊天房间不存在
     CHAT_REPLYLINE_INVALID = 13002, // 回复行号不存在
+    CHAT_ROLL_STARTED = 13003,    // 房间内游戏已经开始
+    CHAT_ROLL_JOINED = 13004,   // 玩家已经加入了游戏
 
     // GM命令错误码
     GM_ACCOUNT_ILLEGAL = 114514,    // 当前账号不是GM账号

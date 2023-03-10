@@ -1,5 +1,7 @@
 import { ConstDefine } from "../Common/ConstDefine";
 import { Logger } from "../Common/Logger";
+import { PlayerEntity } from "../Entity/PlayerEntity";
+import { RoomEntity } from "../Entity/RoomEntity";
 import { RoomInfo } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 
@@ -13,97 +15,84 @@ export class CacheService{
         return this.instance;
     }
 
-    private playerCacheList: Map<string, PlayerCache> = new Map<string, PlayerCache>();
-    private roomCacheList: Map<number, RoomCache> = new Map<number, RoomCache>();
+    private playerList: Map<string, PlayerEntity> = new Map<string, PlayerEntity>();
+    private roomList: Map<number, RoomEntity> = new Map<number, RoomEntity>();
+    private disposeRoomIdList: number[] = [];
     public Init(){
-        this.playerCacheList.clear();
-        this.roomCacheList.clear();
+        this.playerList.clear();
+        this.roomList.clear();
     }
 
-    public GetPlayerCache(account?: string, session?: XNSession): PlayerCache | undefined{
+    public GetPlayerEntity(account?: string, session?: XNSession): PlayerEntity | undefined{
         if(account){
-            return this.playerCacheList.get(account);
+            return this.playerList.get(account);
         }
 
-        for (const [key, value] of this.playerCacheList) {
+        for (const [key, value] of this.playerList) {
             if(value.session === session){
-                return this.playerCacheList.get(value.account);
+                return this.playerList.get(value.account);
             }
         }
     }
 
-    public AddPlayerCache(account: string, session: XNSession){
-        if(!this.playerCacheList.get(account)){
-            let cache: PlayerCache = {
-                account: account,
-                isOnline: true,
-                isAdmin: account === "admin",
-                session: session,
-                roomId: -1,
-                firstLineIndex: 0,
-                curLineIndex: 0,
-            };
-            this.playerCacheList.set(account, cache);
+    public AddPlayerEntity(account: string, session: XNSession){
+        if(!this.playerList.get(account)){
+            let player = new PlayerEntity(account, session);
+            this.playerList.set(account, player);
         }
         else{
             Logger.LogError("Player cache add failed!")
         }
     }
 
-    public UpdatePlayerCache(account: string, roomId?: number){
-        let player = this.playerCacheList.get(account);
+    public UpdatePlayerEntity(account: string, roomId?: number){
+        let player = this.playerList.get(account);
         if(player){
             player.roomId = roomId ? roomId : player.roomId;
         }
     }
 
-    public RemovePlayerCache(account?: string, session?: XNSession){
+    public RemovePlayerEntity(account?: string, session?: XNSession){
         if(account){
-            let player = this.playerCacheList.get(account);
+            let player = this.playerList.get(account);
             if(player){
                 if(player.roomId >= 0){
                     this.RemoveMemeberFromRoom(player.roomId, player);
                 }
-                this.playerCacheList.delete(account);
+                this.playerList.delete(account);
             }
         }
         else if(session){
-            for (const [account, player] of this.playerCacheList) {
+            for (const [account, player] of this.playerList) {
                 if(player.session === session){
                     if(player.roomId >= 0){
                         this.RemoveMemeberFromRoom(player.roomId, player);
                     }
-                    this.playerCacheList.delete(player.account);
+                    this.playerList.delete(player.account);
                     break;
                 }
             }
         }
     }
 
-    public GetRoomCache(id: number): RoomCache | undefined{
+    public GetRoomCache(id: number): RoomEntity | undefined{
         if(id >= 0){
-            return this.roomCacheList.get(id);
+            return this.roomList.get(id);
         }
     }
 
-    public CreateRoomCache(roomName: string, player: PlayerCache): number{
+    public CreateRoomCache(roomName: string, player: PlayerEntity): number{
         let roomId = -1;
-        if(this.roomCacheList.size >= ConstDefine.MAX_ROOM_COUNT){
+        if(this.roomList.size >= ConstDefine.MAX_ROOM_COUNT){
             roomId = -1;
             return roomId;
         }
 
         for(let i = 0; i<ConstDefine.MAX_ROOM_COUNT; i++){
-            if(!this.roomCacheList.get(i)){
+            if(!this.roomList.get(i)){
                 roomId = i;
-                let room: RoomCache = {
-                    roomId: i,
-                    roomName: roomName,
-                    state: {roomId: i, members: []},
-                    chatHistory: [{account: "SYSTEM", text: "CHAT HEAD"}],
-                    emptyTime: 0,
-                };
-                this.roomCacheList.set(i, room);
+                let room = new RoomEntity(roomId, roomName);
+                this.roomList.set(i, room);
                 break;
             }
         }
@@ -111,76 +100,46 @@ export class CacheService{
         return roomId;
     }
 
-    public AddMemeberToRoom(roomId: number, player: PlayerCache){
+    public AddMemeberToRoom(roomId: number, player: PlayerEntity){
         let room = this.GetRoomCache(roomId);
-        if(room && room.state.members.indexOf(player)<0){
+        if(room && !room.ContainsPlayer(player)){
             player.roomId = roomId;
             player.firstLineIndex = 0;
             player.curLineIndex = 0;
-            room.state.members.push(player);
+            room.AddMember(player);
         }
     }
 
-    public RemoveMemeberFromRoom(roomId: number, player: PlayerCache){
+    public RemoveMemeberFromRoom(roomId: number, player: PlayerEntity){
         let room = this.GetRoomCache(roomId);
-        if(room && room.state.members.indexOf(player)>=0){
+        if(room?.ContainsPlayer(player)){
             player.roomId = -1;
             player.firstLineIndex = 0;
             player.curLineIndex = 0;
-            room.state.members.splice(room.state.members.indexOf(player), 1);
+            room.RemoveMember(player);
         }
     }
 
     public GetRoomList(): RoomInfo[]{
         let roomList: RoomInfo[] = [];
-        this.roomCacheList.forEach(room => {
-            roomList.push({roomId: room.roomId, roomName: room.roomName, curMemberCount: room.state.members.length});
+        this.roomList.forEach(room => {
+            roomList.push({roomId: room.roomId, roomName: room.roomName, curMemberCount: room.GetMembers().length});
         });
         return roomList;
     }
 
     public UpdateAllRoomCache(){
-        let disposeIdList: number[] = [];
-        this.roomCacheList.forEach(room => {
-            if(room.state.members.length <= 0){
-                room.emptyTime += ConstDefine.ROOM_UPDATE_TIME;
-                if(room.emptyTime >= ConstDefine.ROOME_DISPOSE_TIME){
-                    disposeIdList.push(room.roomId);
-                }
-            }
-            else{
-                room.emptyTime = 0;
-            }
+        this.roomList.forEach(room => {
+            room.UpdateRoomState();
         });
         
-        disposeIdList.forEach(roomId => {
-            this.roomCacheList.delete(roomId);
+        // 待销毁的房间在一次update后统一清理
+        this.disposeRoomIdList.forEach(roomId => {
+            this.roomList.delete(roomId);
         });
     }
-}
 
-// 在线玩家的定义
-export interface PlayerCache{
-    account: string,
-    isOnline: boolean,
-    isAdmin: boolean,
-    session: XNSession,
-    roomId: number, // 玩家所在房间
-    firstLineIndex: number, // 玩家进入聊天室的第一行聊天行号
-    curLineIndex: number,  // 玩家所在房间最新的聊天行号
-}
-
-// 大厅房间的定义
-export interface RoomCache{
-    roomId: number,
-    roomName: string,
-    state: RoomState,
-    chatHistory: {account: string, text: string}[],
-    emptyTime: number,  // 房间已闲置的时间
-}
-
-// 房间内部状态定义
-export interface RoomState{
-    roomId: number,
-    members: PlayerCache[],
+    public DisposeRoom(roomId: number){
+        this.disposeRoomIdList.push(roomId);
+    }
 }

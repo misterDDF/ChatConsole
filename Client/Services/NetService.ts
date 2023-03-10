@@ -1,6 +1,6 @@
 import { ConstDefine } from "../Common/ConstDefine";
 import { Logger } from "../Common/Logger";
-import { ChatReplyRsp, ChatRollRsp, ChatSayRsp, GameMsg, GMKickRsp, GMMemberListRsp, LoginRsp, LogoutRsp, Proto, RegisterRsp, RoomCreateRsp, RoomEnterRsp, RoomLeaveRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
+import { ChatReplyRsp, ChatRollHint, ChatRollResult, ChatRollRsp, ChatSayRsp, GameMsg, GMKickRsp, GMMemberListRsp, LoginRsp, LogoutRsp, Proto, RegisterRsp, RoomCreateRsp, RoomEnterRsp, RoomLeaveRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
 import { XNSocket, EXCallbacks } from "../NetworkCommon/XNSocket";
 import { CenterSystem } from "../System/CenterSystem";
@@ -85,6 +85,12 @@ export class NetService{
                 break;
             case Proto.PROTO_CHAT_ROLL_RSP:
                 ChatSystem.GetInstance().HandleChatRollRsp(session, msg.content as ChatRollRsp);
+                break;
+            case Proto.PROTO_CHAT_ROLL_HINT:
+                ChatSystem.GetInstance().HandleChatRollHint(session, msg.content as ChatRollHint);
+                break;
+            case Proto.PROTO_CHAT_ROLL_RESULT:
+                ChatSystem.GetInstance().HandleChatRollResult(session, msg.content as ChatRollResult);
                 break;
             case Proto.PROTO_GM_MEMBERLIST_RSP:
                 ChatSystem.GetInstance().HandleGMMemberListRsp(session, msg.content as GMMemberListRsp);

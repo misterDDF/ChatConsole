@@ -1,8 +1,9 @@
 import { ConstDefine } from "../Common/ConstDefine";
+import { PlayerEntity } from "../Entity/PlayerEntity";
 import { ErrorCode } from "../NetworkCommon/ErrorCode";
 import { GameMsg, Proto, RoomCreateReq, RoomCreateRsp, RoomEnterReq, RoomEnterRsp, RoomLeaveRsp, RoomListRsp } from "../NetworkCommon/GameMsg";
 import { XNSession } from "../NetworkCommon/XNSession";
-import { CacheService, PlayerCache } from "../Services/CacheService";
+import { CacheService } from "../Services/CacheService";
 import { NetService } from "../Services/NetService";
 
 // 大厅房间数据管理
@@ -21,7 +22,7 @@ export class CenterSystem{
         }, ConstDefine.ROOM_UPDATE_TIME);
     }
 
-    public SendRoomLeaveRsp(session: XNSession, player: PlayerCache, isForce: boolean){
+    public SendRoomLeaveRsp(session: XNSession, player: PlayerEntity, isForce: boolean){
         let _content: RoomLeaveRsp = {isSuccess: true, roomId: player.roomId, isForce: isForce};
         let msg: GameMsg = new GameMsg(Proto.PROTO_ROOM_LEAVE_RSP, "", _content);
         NetService.GetInstance().SendMsg(session, msg);
@@ -29,7 +30,7 @@ export class CenterSystem{
     }
 
     public HandleRoomCreateReq(session: XNSession, content: RoomCreateReq){
-        let player: PlayerCache | undefined = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        let player: PlayerEntity | undefined = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
             let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
             let errMsg = `{errorCode: ${errorCode}} Player not found, createe room failed`;
@@ -63,8 +64,8 @@ export class CenterSystem{
 
     public HandleRoomEnterReq(session: XNSession, content: RoomEnterReq){
         let room = CacheService.GetInstance().GetRoomCache(content.roomId);
-        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
-        if(room && room.state.members.length >= ConstDefine.MAX_MEMBER_COUNT){
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
+        if(room && room.GetMembers().length >= ConstDefine.MAX_MEMBER_COUNT){
             let errorCode = ErrorCode.ROOM_MEMBER_MAXCOUNT.toString();
             let errMsg = `{errorCode: ${errorCode}} Room member count reaches max count, enter room failed`;
             let _content: RoomEnterRsp = {isSuccess: false, roomId: -1};
@@ -96,7 +97,7 @@ export class CenterSystem{
     }
 
     public HandleRoomLeaveReq(session: XNSession){
-        let player = CacheService.GetInstance().GetPlayerCache(undefined, session);
+        let player = CacheService.GetInstance().GetPlayerEntity(undefined, session);
         if(!player){
             let errorCode = ErrorCode.ROOM_ACCOUNT_NOEXIST.toString();
             let errMsg = `{errorCode: ${errorCode}} Player not found, leave room failed`;
