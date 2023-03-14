@@ -38,6 +38,8 @@ export class SceneService{
     public curScene: SceneBase;
     private eventRegister: Map<SceneEvent, EventCB[]> = new Map<SceneEvent, EventCB[]>();
     private eventQue: {eventId: SceneEvent, params?: any[]}[];
+    private waitForSpeak = false;
+    private tempCommand: Command | undefined;
     public constructor(){
         this.curScene = new SceneBase();
         this.eventQue = [];
@@ -56,6 +58,14 @@ export class SceneService{
                 this.eventQue.splice(0, 1);
             }
         }, 100);
+    }
+
+    public GetWaitForSpeak(): boolean{
+        return this.waitForSpeak;
+    }
+
+    public SetWaitForSpeak(value: boolean){
+        this.waitForSpeak = value;
     }
 
     public RegisterSceneEvent(eventId: SceneEvent, cb: EventCB){
@@ -107,7 +117,31 @@ export class SceneService{
         }
     }
 
+    public ExecuteSpeakBuffer(words: string){
+        if(this.GetWaitForSpeak()){
+            if(this.tempCommand?.operation === "say"){
+                this.tempCommand.params[0] = words;
+            }
+            if(this.tempCommand?.operation === "reply"){
+                this.tempCommand.params[1] = words;
+            }
+            if(this.tempCommand){
+                this.ExecuteCommand(this.tempCommand);
+            }
+
+            this.SetWaitForSpeak(false);
+            this.tempCommand = undefined;
+        }
+    }
+
     public ExecuteCommand(cmd: Command){
+        if(!this.tempCommand && (cmd.operation === "say" || cmd.operation === "reply")){
+            this.SetWaitForSpeak(true);
+            this.tempCommand = cmd;
+            console.log("Input the speaking words");
+            return;
+        }
+
         if(this.curScene){
             this.curScene.OnReceiveCommand(cmd);
         }

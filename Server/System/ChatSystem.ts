@@ -7,6 +7,7 @@ import { CacheService } from "../Services/CacheService";
 import { NetService } from "../Services/NetService";
 import { CenterSystem } from "./CenterSystem";
 import { RollResult } from "../NetworkCommon/GameMsg";
+import { Logger } from "../Common/Logger";
 
 export class ChatSystem{
     private static instance: ChatSystem;
@@ -99,13 +100,18 @@ export class ChatSystem{
         }
 
         room.GetMembers().forEach(member => {
-            let preChat = (room as RoomEntity).chatHistory[(player as PlayerEntity).firstLineIndex + content.line];
-            let replyText = `Reply to >>> @${preChat.account}: ${preChat.text}`;
-            let text = `[line_${member.curLineIndex + 1}]@${player?.account}: ${content.text}`;
-            let _content: ChatSayRsp = {text: replyText + "\n" + text};
-            let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_REPLY_RSP, "", _content);
-            member.curLineIndex++;
-            NetService.GetInstance().SendMsg(member.session, msg); 
+            let preChat = (room as RoomEntity).chatHistory[(player as PlayerEntity).firstLineIndex + content.line - 1];
+            if(!preChat){
+                Logger.LogError("Reply Index Error");
+            }
+            else{
+                let replyText = `Reply to >>> @${preChat.account}: ${preChat.text}`;
+                let text = `[line_${member.curLineIndex + 1}]@${player?.account}: ${content.text}`;
+                let _content: ChatSayRsp = {text: replyText + "\n" + text};
+                let msg: GameMsg = new GameMsg(Proto.PROTO_CHAT_REPLY_RSP, "", _content);
+                member.curLineIndex++;
+                NetService.GetInstance().SendMsg(member.session, msg); 
+            }
         });
         room.CheckMention(content.text);
         room.chatHistory.push({account: player?.account, text: content.text});

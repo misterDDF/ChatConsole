@@ -24,8 +24,13 @@ export class CommandService{
         let stdin = process.openStdin();
 
         stdin.addListener("data", (input) => {
-            this.curCommand = this.BuildCommand(input.toString());
-            SceneService.GetInstance().ExecuteCommand(this.curCommand);
+            if(SceneService.GetInstance().GetWaitForSpeak()){
+                SceneService.GetInstance().ExecuteSpeakBuffer(input.toString());
+            }
+            else{
+                this.curCommand = this.BuildCommand(input.toString());
+                SceneService.GetInstance().ExecuteCommand(this.curCommand);
+            }
         });
 
         Logger.Log("CommandService init done.")
